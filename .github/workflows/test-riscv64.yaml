@@ -1,0 +1,38 @@
+name: test-riscv64
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up mise tools
+        uses: ./.github/actions/setup-mise
+        with:
+          install-args: "go node pnpm"
+
+      - name: Install pnpm dependencies
+        uses: ./.github/actions/pnpm-install
+
+      - name: Build riscv64 tarball
+        run: |
+          set -euo pipefail
+          version="$(./scripts/version.sh)"
+          make gen/mark-fresh
+          make build/coder_"$version"_linux_riscv64.tar.gz
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: coder-linux-riscv64
+          path: build/*_linux_riscv64.tar.gz
